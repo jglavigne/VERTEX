@@ -341,10 +341,24 @@ console.log('📥 Pusher event received:', {
           </button>
 
           <button
-            onClick={() => {setIsLiveMode(!isLiveMode)}}
+            onClick={() => {
+              if (!isLiveMode) {
+                // ✅ Activation : rafraîchir d'abord
+                setIsRefreshing(true);
+                router.refresh();
+                setTimeout(() => {
+                  setIsLiveMode(true);
+                  setIsRefreshing(false);
+                }, 1000);
+              } else {
+                // ✅ Désactivation : juste désactiver
+                setIsLiveMode(false);
+              }
+            }}
+            disabled={isRefreshing}
             className={`${styles.btn} ${isLiveMode ? styles.btnLiveActive : styles.btnLive}`}
           >
-            {isLiveMode ? '🟢 Temps réel' : '⚪ Temps réel'}
+            {isRefreshing ? '⏳ Activation...' : isLiveMode ? '🟢 Temps réel' : '⚪ Temps réel'}
           </button>
 
           <button
