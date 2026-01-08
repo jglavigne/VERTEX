@@ -341,7 +341,7 @@ console.log('📥 Pusher event received:', {
           </button>
 
           <button
-            onClick={() => setIsLiveMode(!isLiveMode)}
+            onClick={() => {setIsLiveMode(!isLiveMode)}}
             className={`${styles.btn} ${isLiveMode ? styles.btnLiveActive : styles.btnLive}`}
           >
             {isLiveMode ? '🟢 Temps réel' : '⚪ Temps réel'}
