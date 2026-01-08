@@ -344,11 +344,11 @@ console.log('📥 Pusher event received:', {
             onClick={() => {
               if (!isLiveMode) {
                 // ✅ Activation : rafraîchir d'abord
-                setIsRefreshing(true);
+                // setIsRefreshing(true);
                 router.refresh();
                 setTimeout(() => {
                   setIsLiveMode(true);
-                  setIsRefreshing(false);
+                  // setIsRefreshing(false);
                 }, 1000);
               } else {
                 // ✅ Désactivation : juste désactiver
