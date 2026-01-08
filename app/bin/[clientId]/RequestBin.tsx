@@ -75,21 +75,36 @@ export default function RequestBin({ requests: initialRequests, clientId }: Prop
   const [isLiveMode, setIsLiveMode] = useState(false);
   const [liveRequests, setLiveRequests] = useState<WebhookRequest[]>([]);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [pusherInstance, setPusherInstance] = useState<Pusher | null>(null); // ✅ NOUVEAU
-  const liveRequestsRef = useRef(liveRequests);
-  const requestsRef = useRef(requests);
-  useEffect(() => {
-    liveRequestsRef.current = liveRequests;
-  }, [liveRequests]);
+  const [pendingLiveMode, setPendingLiveMode] = useState(false);
+  const [pusherInstance, setPusherInstance] = useState<Pusher | null>(null); 
+  // const liveRequestsRef = useRef(liveRequests);
+  // const requestsRef = useRef(requests);
+  const liveRequestsRef = useRef<WebhookRequest[]>([]);
+  const requestsRef = useRef<WebhookRequest[]>([]);
 
-  useEffect(() => {
-    requestsRef.current = requests;
-  }, [requests]);
+  // useEffect(() => {
+  //   liveRequestsRef.current = liveRequests;
+  // }, [liveRequests]);
+
+  // useEffect(() => {
+  //   requestsRef.current = requests;
+  // }, [requests]);
 
 useEffect(() => {
+  // console.log('🔄 REFRESH détecté, initialRequests:', initialRequests.length);
   setRequests(initialRequests);
+  requestsRef.current = initialRequests;
+  // console.log('🗑️ Vidage de liveRequests (avant):', liveRequests.length);
+
   setLiveRequests([]); // ✅ Vider les logs temps réel aussi
+  liveRequestsRef.current = [];
+  // console.log('✅ liveRequests vidé, liveRequestsRef:', liveRequestsRef.current.length);
+ 
   setIsRefreshing(false);
+  if (pendingLiveMode) {
+    setIsLiveMode(true);
+    setPendingLiveMode(false);
+  }
 }, [initialRequests]);
 
   // state → URL
@@ -154,18 +169,31 @@ useEffect(() => {
 
       const responseData = await res.json();
 
-console.log('📥 Pusher event received:', {
-  pusherEventId: data.id,
-  apiResponse: responseData,
-  logsCount: responseData.logs?.length || 0,
-  logs: responseData.logs
-});
+// console.log('📥 Pusher event received:', {
+//   pusherEventId: data.id,
+//   apiResponse: responseData,
+//   logsCount: responseData.logs?.length || 0,
+//   logs: responseData.logs
+// });
 
       // Si nouveaux logs
-      if (responseData.logs && responseData.logs.length > 0) {
-        setLiveRequests(prev => [...responseData.logs, ...prev]);
-        setSelected(responseData.logs[0]);
-      }
+ if (responseData.logs && responseData.logs.length > 0) {
+ // console.log('📥 Nouveaux logs Pusher:', responseData.logs.length);
+  
+  const currentLive = liveRequestsRef.current;
+  const existingIds = new Set(currentLive.map(log => log.id));
+  const newLogs = responseData.logs.filter(log => !existingIds.has(log.id));
+  
+ // console.log('📥 Logs vraiment nouveaux:', newLogs.length);
+  
+  // ✅ Uniquement si il y a vraiment des nouveaux logs
+  if (newLogs.length > 0) {
+    const newValue = [...newLogs, ...currentLive];
+    liveRequestsRef.current = newValue;
+    setLiveRequests(newValue);
+    setSelected(newLogs[0]);
+  }
+}
 
     } catch (err) {
       console.error("Error fetching new logs:", err);
@@ -227,6 +255,12 @@ console.log('📥 Pusher event received:', {
 
   // ✅ COMBINER LES LOGS (live + initiaux)
   const allRequests = useMemo(() => {
+    // console.log('📊 Recalcul allRequests:', {
+    //   liveRequests: liveRequests.length,
+    //   requests: requests.length,
+    //   total: liveRequests.length + requests.length
+    // });
+
     return [...liveRequests, ...requests];
   }, [liveRequests, requests]);
 
@@ -344,12 +378,9 @@ console.log('📥 Pusher event received:', {
             onClick={() => {
               if (!isLiveMode) {
                 // ✅ Activation : rafraîchir d'abord
-                // setIsRefreshing(true);
+                setIsRefreshing(true);
+                setPendingLiveMode(true);
                 router.refresh();
-                setTimeout(() => {
-                  setIsLiveMode(true);
-                  // setIsRefreshing(false);
-                }, 1000);
               } else {
                 // ✅ Désactivation : juste désactiver
                 setIsLiveMode(false);
