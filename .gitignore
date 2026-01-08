@@ -1,0 +1,58 @@
+
+# =========================
+# Dépendances / Node
+# =========================
+node_modules/
+
+# =========================
+# Build / Next.js
+# =========================
+.next/
+out/
+# (si tu utilises Turbopack ou un outil de build)
+dist/
+build/
+coverage/
+
+# =========================
+# Caches & temporaires
+# =========================
+.cache/
+.tmp/
+__pycache__/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# =========================
+# TypeScript
+# =========================
+*.tsbuildinfo
+
+# =========================
+# Environnements (ne JAMAIS committer les secrets)
+# =========================
+.env
+.env.local
+.env.production
+.env.development
+.env.test
+
+# =========================
+# IDE / OS
+# =========================
+.vscode/
+.DS_Store
+
+# =========================
+# Vercel / déploiement local
+# =========================
+.vercel/
+
+# =========================
+# Storybook (si utilisé)
+# =========================
+.storybook-out/
+
+.continue

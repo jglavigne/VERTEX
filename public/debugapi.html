@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <title>Client API – GET/POST/PUT/DELETE</title>
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; margin: 20px; }
+    fieldset { margin-bottom: 16px; }
+    label { display: block; margin-bottom: 6px; font-weight: 600; }
+    input[type="text"], input[type="url"], textarea, select {
+      width: 100%; box-sizing: border-box; padding: 8px; font-family: inherit;
+    }
+    textarea { min-height: 90px; }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .actions { display: flex; gap: 8px; align-items: center; }
+    .result { white-space: pre-wrap; background: #0b1020; color: #e7e7e7; padding: 12px; border-radius: 6px; overflow: auto; }
+    .muted { color: #666; font-size: 0.9em; }
+    .ok { color: #27ae60; }
+    .err { color: #e74c3c; }
+  </style>
+</head>
+<body>
+  <h1>Client API</h1>
+
+  <fieldset>
+    <legend>Endpoint</legend>
+    <div class="row">
+      <div>
+        <label for="apiUrl">URL</label>
+        <select id="apiUrl">
+          <option value="https://01k8tk4pgg8qy2vwt0z6yw7gq510-b7f49b16203cdddcaed6.requestinspector.com/">Request Inspector</option>
+        <option value="https://viseo.free.nf/serv-apio.php?test=oui">viseo.free.nf APIo</option>
+        <option value="https://viseo.free.nf/serv-apit.php?test=oui">viseo.free.nf apit</option>
+        <option value="https://viseo.free.nf/see-headers.php?test=oui">viseo.free.nf see-headers</option>
+       <option value="https://viseo.free.nf/JGPK1.php?customerCode=TEST">viseo.free.nf JGPK1</option>
+        <option value="https://viseo.yzz.me/serv-apio.php?test=oui">viseo.yzz.me APIo</option>
+        <option value="https://viseo.yzz.me/serv-apit.php?test=oui">viseo.yzz.me apit</option>
+        <option value="https://viseo.yzz.me/see-headers.php?test=oui">viseo.yzz.me see-headers</option>
+       <option value="https://viseo.yzz.me/JGPK1.php?customerCode=TEST">viseo.yzz.me JGPK1</option>
+       <option value="https://viseo.vercel.app/api/promos">viseo.vercel.app/api/promos</option>
+       <option value="https://viseo.vercel.app/api/send">viseo.vercel.app/api/send</option>
+        <option value="https://viseo.vercel.app/api/proxy" data-key='basket'>viseo.vercel.app/api/proxy</option>
+         <option value="https://viseo.worldlite.fr/api/lib/proxy.php" data-key='basket'>viseo.worldlite.fr/api/lib/proxy.php</option>
+       </select>
+             <input id="apiUrlt" type="text" placeholder="" value="" />
+      </div>
+
+      <div>
+        <label for="method">Méthode</label>
+        <select id="method">
+          <option>GET</option>
+          <option selected>POST</option>
+          <option>PUT</option>
+          <option>DELETE</option>
+          <option>PATCH</option>
+          <option>UNKNOW</option>
+       </select>
+      </div>
+    </div>
+    <div class="row" style="margin-top:12px;">
+      <div>
+        <label for="token">Authorization (Bearer)</label>
+        <input id="token" type="text" placeholder="ex: VOTRE_TOKEN_TRES_SECRET" value="TOKEN4" />
+        <div class="muted">Ajouté comme <code>Authorization: Bearer &lt;token&gt;</code> si non vide.</div>
+      </div>
+      <div>
+          <label for="timeout">Timeout (ms)</label>          
+        <input id="timeout" type="text" value="10000" />
+      </div>
+    </div>
+  </fieldset>
+
+  <fieldset>
+    <legend>Paramètres</legend>
+    <div class="row">
+      <div>
+        <label for="query">Query params</label>
+        <textarea id="query" placeholder='JSON: {"user":"JGL","tags":["a","b"]} ou URL: user=JGL&tags=a&tags=b'></textarea>
+      </div>
+      <div>
+        <label for="body">Body (JSON pour POST/PUT/PATCH/DELETE)</label>
+        <textarea id="body" placeholder='{"param1":"Hello","param2":"World"}'>{"param1":"Hello","param2":"World"}</textarea>
+      </div>
+    </div>
+  </fieldset>
+
+  <div class="actions">
+    <button id="sendBtn">Envoyer</button>
+    <span id="status" class="muted"></span>
+  </div>
+
+  <h3>Réponse</h3>
+  <div id="headers" class="result" style="display:none;"></div>
+  <pre id="output" class="result"></pre>
+
+  <script>
+  const selectApi = document.getElementById("apiUrl");
+  const inputApi = document.getElementById("apiUrlt");
+  let content = {};
+  content['basket'] = '{"url": "https://retail-services.cegid.cloud/t/pos/external-basket/v1","payload": {"externalReference":"SimpleSale","basketType":"RECEIPT","customer":{"customerCode":"001000000003"},"itemLines":[{"itemLineId":1,"discounts":[{"discountReason":{"discountReasonId":"PXCLB"},"discountAmount":{"currency":"EUR","value":10.5}}],"item":{"itemCode":"FM-050-5G-24M                    X"},"quantity":1,"price":{"basePrice":105,"currentPrice":105},"lineAmount":{"currency":"EUR","value":94.5},"inventoryOrigin":{"warehouseId":"ORLS"},"externalReference":"LINEREF-0001","catalogReference":"CAT-2025-AUTUMN"}],"store":{"storeId":"ORLS"}}}';
+  
+  // Met à jour l'input au changement du select
+  selectApi.addEventListener("change", () => {
+    inputApi.value = selectApi.value;
+    const s = selectApi.selectedOptions[0].dataset.key;
+    body.value = !s ? "" : (content[s] || "");
+  });
+
+  // Optionnel : initialiser l'input avec la valeur par défaut
+  inputApi.value = selectApi.value;
+    /**
+     * Parse les query params depuis une chaîne en JSON OU en format URL (a=1&b=2).
+     * Retourne un objet {k: v}. Supporte les tableaux en JSON. En URL, répéter la clé.
+     */
+    function parseQueryInput(input) {
+      const s = (input || '').trim();
+      if (!s) return null;
+
+      // Essai JSON d'abord
+      try {
+        const obj = JSON.parse(s);
+        if (obj && typeof obj === 'object') return obj;
+      } catch { /* pas du JSON */ }
+
+      // Sinon, parser type URL
+      const usp = new URLSearchParams(s);
+      const out = {};
+      for (const [k, v] of usp.entries()) {
+        if (k in out) {
+          // transforme en tableau si clé répétée
+          out[k] = Array.isArray(out[k]) ? out[k].concat(v) : [out[k], v];
+        } else {
+          out[k] = v;
+        }
+      }
+      return out;
+    }
+
+    /**
+     * Appel API générique (GET/POST/PUT/PATCH/DELETE)
+     */
+    async function callApi(url, {
+      method  = 'GET',
+      query   = undefined,
+      body    = undefined,
+      token   = '',
+      headers = {},
+      timeout = 10000,
+    } = {}) {
+      // 1) Construire l’URL avec query params si présents
+      let finalUrl = url;
+      if (query && typeof query === 'object') {
+        const usp = new URLSearchParams();
+        for (const [k, v] of Object.entries(query)) {
+          if (v === undefined || v === null) continue;
+          if (Array.isArray(v)) v.forEach(item => usp.append(k, String(item)));
+          else usp.append(k, String(v));
+        }
+        const qs = usp.toString();
+        if (qs) finalUrl += (finalUrl.includes('?') ? '&' : '?') + qs;
+      }
+
+      // 2) Timeout via AbortController
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), Number(timeout) || 10000);
+
+      // 3) Headers de base
+      const baseHeaders = {
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...headers
+      };
+
+      // 4) Body pour méthodes qui le permettent
+      const methodUpper = method.toUpperCase();
+      const methodAllowsBody = ['POST', 'PUT', 'PATCH', 'DELETE'].includes(methodUpper);
+
+      let fetchBody;
+      if (methodAllowsBody && body !== undefined) {
+        if (!('Content-Type' in baseHeaders)) {
+          baseHeaders['Content-Type'] = 'application/json';
+        }
+        fetchBody = baseHeaders['Content-Type']?.startsWith('application/json')
+          ? JSON.stringify(body)
+          : body; // autorise FormData / texte brut si Content-Type changé
+      }
+
+      // 5) Fetch
+      const res = await fetch(finalUrl, {
+        method: methodUpper,
+        headers: baseHeaders,
+        body: methodAllowsBody ? fetchBody : undefined,
+        signal: controller.signal,
+        redirect: 'manual'
+      });
+
+      clearTimeout(timer);
+
+      // 6) Lire le corps (même si !ok)
+      const raw = await res.text();
+      let data; try { data = raw ? JSON.parse(raw) : null; } catch { data = raw; }
+
+      // 7) Construire un objet de réponse riche
+      const headersObj = {};
+      res.headers.forEach((v, k) => { headersObj[k] = v; });
+
+      return {
+        ok: res.ok,
+        status: res.status,
+        statusText: res.statusText,
+        url: finalUrl,
+        headers: headersObj,
+        data
+      };
+    }
+
+    document.getElementById('sendBtn').addEventListener('click', async () => {
+      const url = document.getElementById('apiUrlt').value;
+      const method = document.getElementById('method').value;
+      const token = document.getElementById('token').value.trim();
+      const timeout = document.getElementById('timeout').value.trim();
+      const queryInput = document.getElementById('query').value;
+      const bodyInput = document.getElementById('body').value;
+
+      const $status = document.getElementById('status');
+      const $headers = document.getElementById('headers');
+      const $output = document.getElementById('output');
+
+      $status.textContent = 'Appel en cours...';
+      $headers.style.display = 'none';
+      $headers.textContent = '';
+      $output.textContent = '';
+
+      // Parse query
+      const query = parseQueryInput(queryInput);
+
+      // Parse body JSON (si méthode avec body et contenu fourni)
+      let body = undefined;
+      if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(method.toUpperCase())) {
+        const s = bodyInput.trim();
+        if (s) {
+          try { body = JSON.parse(s); }
+          catch (e) {
+            $status.innerHTML = '<span class="err">Body JSON invalide</span>';
+            $output.textContent = e.message;
+            return;
+          }
+        }
+      }
+
+      try {
+        const resp = await callApi(url, { method, query, body, token, timeout });
+
+        // En-têtes (debug)
+        $headers.style.display = 'block';
+        $headers.textContent = JSON.stringify({
+          ok: resp.ok,
+          status: resp.status,
+          statusText: resp.statusText,
+          url: resp.url,
+          headers: resp.headers
+        }, null, 2);
+
+        // Corps
+        $output.textContent = (typeof resp.data === 'string')
+          ? resp.data
+          : JSON.stringify(resp.data, null, 2);
+
+        // Statut lisible
+        $status.innerHTML = resp.ok
+          ? `<span class="ok">Succès (HTTP ${resp.status})</span>`
+          : `<span class="err">Erreur (HTTP ${resp.status})</span>`;
+
+      } catch (err) {
+        $status.innerHTML = `<span class="err">Erreur réseau / timeout</span>`;
+        $output.textContent = err.message || String(err);
+        console.error(err);
+      }
+    });
+  </script>
+</body>
+</html>
