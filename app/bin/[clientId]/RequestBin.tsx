@@ -389,7 +389,8 @@ useEffect(() => {
             disabled={isRefreshing}
             className={`${styles.btn} ${isLiveMode ? styles.btnLiveActive : styles.btnLive}`}
           >
-            {isRefreshing ? '⏳ Activation...' : isLiveMode ? '🟢 Temps réel' : '⚪ Temps réel'}
+            {isLiveMode ? '🟢 Temps réel' : '⚪ Temps réel'}
+            {/* {isRefreshing ? '⏳ Activation...' : isLiveMode ? '🟢 Temps réel' : '⚪ Temps réel'} */}
           </button>
 
           <button
@@ -412,9 +413,9 @@ useEffect(() => {
             onClick={() => setSelected(req)}
             className={`${styles.listItem} ${selected?.id === req.id ? styles.listItemSelected : ''}`}
           >
-            <strong>{req.method}</strong> <small>{formatDateStable(req.created_at)}</small>
+            <strong>{req.method}</strong> <small>{formatDateStable(req.created_at)}
             <br />
-            {req.path}
+            {req.path}</small>
             
           </div>
         ))}

@@ -279,7 +279,7 @@
 .sectionContent, .sectionContentBody, .debugResult {
   margin: 0;
   background: white;
-  font-size: 0.8rem;
+  font-size: 0.8em;
   font-family: 'Courier New', monospace;
   line-height: 1.3;
    margin-bottom: 0px; 
@@ -293,7 +293,7 @@
   display: flex;
   align-items: center;
   gap: 5px;
-  font-size: 14px;
+  font-size: 1em;
   line-height: 1.4;
 }
 
