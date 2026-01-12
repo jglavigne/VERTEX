@@ -1,4 +1,6 @@
-"use client";
+// /app/bin/RequestBin.tsx
+
+"use client";+
 
 import { useState, useMemo, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
