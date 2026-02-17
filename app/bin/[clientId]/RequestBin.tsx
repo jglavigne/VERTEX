@@ -69,6 +69,8 @@ export default function RequestBin({ requests: initialRequests, clientId }: Prop
   const [search, setSearch] = useState(searchParams.get("search") ?? "");
   const [days, setDays] = useState(Number(searchParams.get("days") ?? 7));
   const [page, setPage] = useState(Number(searchParams.get("page") ?? 1));
+  const [searchPath, setSearchPath] = useState(searchParams.get("searchPath") ?? "");
+  const [limit, setLimit] = useState(Number(searchParams.get("limit") ?? 500));
   const [collapseHeaders, setCollapseHeaders] = useState(true);
   const [collapseBody, setCollapseBody] = useState(false);
   const [collapseDebugResult, setCollapseDebugResult] = useState(true);
@@ -115,8 +117,8 @@ useEffect(() => {
     if (search) params.set("search", search);
     params.set("days", String(days));
     params.set("page", String(page));
-    router.replace(`?${params.toString()}`, { scroll: false });
-  }, [search, days, page, router]);
+    window.history.replaceState(null, "", `?${params.toString()}`);
+  }, [search, days, page]);
 
 // PUSHER (remplace le long polling)
 useEffect(() => {
@@ -278,9 +280,10 @@ useEffect(() => {
         r.method.toLowerCase().includes(search.toLowerCase()) ||
         JSON.stringify(r.body).toLowerCase().includes(search.toLowerCase()) ||
         JSON.stringify(r.headers).toLowerCase().includes(search.toLowerCase());
-      return inDate && inSearch;
+      const inPath = searchPath === "" || r.path.toLowerCase().includes(searchPath.toLowerCase());
+      return inDate && inSearch && inPath;
     });
-  }, [allRequests, search, days]);
+  }, [allRequests, search, searchPath, days]);
 
   const pageCount = Math.ceil(filtered.length / PAGE_SIZE);
   const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
@@ -309,12 +312,27 @@ useEffect(() => {
     }
   };
 
+  const refreshWithParams = () => {
+    const params = new URLSearchParams(window.location.search);
+    if (searchPath) params.set("searchPath", searchPath);
+    else params.delete("searchPath");
+    params.set("limit", String(limit));
+    router.push(`?${params.toString()}`);
+  };
+
   return (
   <div className={styles.container}>
     {/* Zone gauche : liste */}
     <div className={styles.leftPanel}>
       {/* Partie haute fixe */}
       <div className={styles.topControls}>
+        <input
+          type="text"
+          placeholder="Path"
+          value={searchPath}
+          onChange={(e) => { setSearchPath(e.target.value); setPage(1); }}
+          className={styles.searchInput}
+        />
         <input
           type="text"
           placeholder="Recherche (path, method, body, headers)"
@@ -339,6 +357,11 @@ useEffect(() => {
                 setPage(1);
               }}
             />
+          </label>
+          <label>
+            Limite:{" "}
+            <input type="number" value={limit} min={100} max={20000} step={100} style={{ width: '80px' }}
+              onChange={(e) => { setLimit(Number(e.target.value)); setPage(1); }} />
           </label>
           ({filtered.length})
           {/* Pagination */}
@@ -368,7 +391,7 @@ useEffect(() => {
             onClick={() => {
               setIsLiveMode(false); 
               setIsRefreshing(true);
-              router.refresh();
+              refreshWithParams();
             }}
             disabled={isRefreshing}
             className={`${styles.btn} ${styles.btnRefresh}`}
@@ -382,7 +405,7 @@ useEffect(() => {
                 // ✅ Activation : rafraîchir d'abord
                 setIsRefreshing(true);
                 setPendingLiveMode(true);
-                router.refresh();
+                refreshWithParams();
               } else {
                 // ✅ Désactivation : juste désactiver
                 setIsLiveMode(false);
